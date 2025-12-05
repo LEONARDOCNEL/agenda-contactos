@@ -1,0 +1,35 @@
+# Desde la raíz de tu proyecto (u4 u4/)
+cd C:\Users\Leonardo\OneDrive\Desktop\u4 u4
+
+# Crea .gitignore
+@"
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vue
+dist/
+dist-ssr/
+*.local
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+composer.lock
+"@ | Set-Content -Path .gitignore -Encoding UTF8
