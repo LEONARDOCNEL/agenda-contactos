@@ -1,7 +1,7 @@
 services:
   - type: web
     name: agenda-backend
-    runtime: php
+    runtime: php:8.2
     region: oregon
     plan: free
     buildCommand: |
