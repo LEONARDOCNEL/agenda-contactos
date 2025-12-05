@@ -1,13 +1,15 @@
 services:
   - type: web
     name: agenda-backend
-    env: php
+    runtime: node
     region: oregon
     plan: free
     buildCommand: |
+      # Temporalmente usamos Node para el build
+      echo "PHP backend - Build placeholder"
       cp -r backend/* .
       rmdir backend 2>/dev/null || true
-    startCommand: php -S 0.0.0.0:$PORT index.php
+    startCommand: node -e "console.log('PHP service - use php -S 0.0.0.0:$PORT index.php')"
     healthCheckPath: /
     autoDeploy: true
     envVars:
