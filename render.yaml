@@ -5,7 +5,6 @@ services:
     region: oregon
     plan: free
     buildCommand: |
-      # Temporalmente usamos Node para el build
       echo "PHP backend - Build placeholder"
       cp -r backend/* .
       rmdir backend 2>/dev/null || true
@@ -39,7 +38,7 @@ services:
   - type: web
     name: agenda-frontend
     env: static
-    plan: free
+    # ❌ ELIMINAR plan: free (Static Sites no tienen plan especificado)
     buildCommand: |
       cd frontend
       npm ci
