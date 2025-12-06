@@ -1,32 +1,30 @@
 FROM php:8.2-apache
 
+# Instalar PostgreSQL
 RUN apt-get update && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql
 
-# 1. Copiar backend
-COPY backend/ /var/www/html/
+# Crear directorio de trabajo
+WORKDIR /var/www/html
 
-# 2. Configuración CRÍTICA para Apache
-RUN echo '<VirtualHost *:${PORT}>' > /etc/apache2/sites-available/000-default.conf
-RUN echo '    DocumentRoot /var/www/html' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '    <Directory /var/www/html>' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '        Options -Indexes +FollowSymLinks' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '        AllowOverride All' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '        Require all granted' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '        DirectoryIndex index.php' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '    </Directory>' >> /etc/apache2/sites-available/000-default.conf
-RUN echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
+# COPIAR EXPLÍCITAMENTE cada carpeta
+COPY backend/index.php .
+COPY backend/api/ api/
+COPY backend/.htaccess .
 
-# 3. Puerto de Render
-RUN echo 'Listen ${PORT}' > /etc/apache2/ports.conf
+# Listar para verificar
+RUN ls -la && \
+    echo "=== Archivos copiados ===" && \
+    find . -type f -name "*.php" | head -20
 
-# 4. Habilitar mod_rewrite
+# Configuración MINIMA de Apache
+RUN echo "Listen ${PORT}" > /etc/apache2/ports.conf && \
+    sed -i "s/Listen 80/Listen ${PORT}/g" /etc/apache2/ports.conf
+
+# Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# 5. Crear .htaccess automáticamente
-RUN echo 'RewriteEngine On' > /var/www/html/.htaccess
-RUN echo 'RewriteCond %{REQUEST_FILENAME} !-f' >> /var/www/html/.htaccess
-RUN echo 'RewriteCond %{REQUEST_FILENAME} !-d' >> /var/www/html/.htaccess
-RUN echo 'RewriteRule ^ index.php [QSA,L]' >> /var/www/html/.htaccess
+# Configurar que todas las rutas vayan a index.php
+RUN echo 'FallbackResource /index.php' >> /etc/apache2/apache2.conf
 
 CMD ["apache2-foreground"]
