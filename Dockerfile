@@ -12,13 +12,15 @@ RUN echo 'FallbackResource /index.php' >> /etc/apache2/apache2.conf
 # 3. Directorio de trabajo
 WORKDIR /var/www/html
 
-# 4. Intentar copiar archivos locales primero
+# 4. ✅ CREAR directorio primero, LUEGO copiar
+RUN mkdir -p /tmp/src
 COPY . /tmp/src/ 2>/dev/null || true
 
 # 5. Mover archivos si existen
 RUN if [ -d "/tmp/src/backend" ]; then \
     echo "=== Copiando archivos locales ===" && \
-    cp -r /tmp/src/backend/* . 2>/dev/null || true; \
+    cp -r /tmp/src/backend/* . 2>/dev/null || true && \
+    ls -la; \
     fi
 
 # 6. Si index.php no existe, crear uno básico
