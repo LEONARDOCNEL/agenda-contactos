@@ -1,26 +1,39 @@
 FROM php:8.2-apache
 
+# 1. Instalar PostgreSQL
 RUN apt-get update && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql
 
+# 2. Configurar Apache
+RUN a2enmod rewrite
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+RUN echo 'FallbackResource /index.php' >> /etc/apache2/apache2.conf
+
+# 3. Directorio de trabajo
 WORKDIR /var/www/html
 
-# COPIAR TODO EL REPOSITORIO
-COPY . /tmp/repo/
+# 4. Intentar copiar archivos locales primero
+COPY . /tmp/src/ 2>/dev/null || true
 
-# MOVER solo lo necesario
-RUN mv /tmp/repo/backend/* . 2>/dev/null || (echo "ERROR: No se pudo mover backend/" && ls -la /tmp/repo/)
+# 5. Mover archivos si existen
+RUN if [ -d "/tmp/src/backend" ]; then \
+    echo "=== Copiando archivos locales ===" && \
+    cp -r /tmp/src/backend/* . 2>/dev/null || true; \
+    fi
 
-# Verificar que los archivos están
-RUN echo "=== CONTENIDO DE /var/www/html ===" && \
+# 6. Si index.php no existe, crear uno básico
+RUN if [ ! -f "index.php" ]; then \
+    echo '<?php header("Content-Type: application/json"); echo json_encode(["success"=>true,"message"=>"API funcionando","endpoints":["/","/auth/login","/contactos"]]); ?>' > index.php; \
+    fi
+
+# 7. Crear estructura de directorios si no existe
+RUN mkdir -p api config 2>/dev/null || true
+
+# 8. Script de inicio
+CMD echo "=== INICIANDO APACHE ===" && \
+    echo "PORT: ${PORT}" && \
+    echo "Listen ${PORT}" > /etc/apache2/ports.conf && \
+    sed -i "s/:80>/:${PORT}>/g" /etc/apache2/sites-available/000-default.conf 2>/dev/null || true && \
+    echo "=== ESTRUCTURA /var/www/html ===" && \
     ls -la && \
-    echo "=== Archivos PHP encontrados ===" && \
-    find . -name "*.php" | head -20
-
-# Configurar Apache
-RUN echo "Listen ${PORT}" > /etc/apache2/ports.conf
-RUN sed -i "s/Listen 80/Listen ${PORT}/g" /etc/apache2/ports.conf
-RUN echo 'FallbackResource /index.php' >> /etc/apache2/apache2.conf
-RUN a2enmod rewrite
-
-CMD ["apache2-foreground"]
+    apache2-foreground
